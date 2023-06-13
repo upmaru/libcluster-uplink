@@ -1,6 +1,6 @@
 # ClusterUplink
 
-**TODO: Add description**
+Libcluster strategy for uplink. This strategy will connect to the unix socket inside your container and retrieve service discovery endpoint. It will then call the endpoint and retrieve the list of instances to connect to.
 
 ## Installation
 
@@ -14,6 +14,24 @@ def deps do
   ]
 end
 ```
+
+```elixir
+config :libcluster,
+  topologies: [
+    example: [
+      strategy: Cluster.Strategy.Uplink,
+      config: [
+        app_name: "your-app"
+      ]
+    ]
+  ]
+```
+
+## Configuration
+
+| Key | Required | Description |
+| :-- | :------: | :---------- |
+| `:app_name` | ✓ | The name of your elixir application |
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
