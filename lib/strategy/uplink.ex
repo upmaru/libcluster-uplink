@@ -5,7 +5,7 @@ defmodule Cluster.Strategy.Uplink do
   alias Cluster.Strategy.State
 
   @default_polling_interval 5_000
-  @service_discovery_key ~s(http:///1.0/config/user.service_discovery_url)
+  @service_discovery_key ~s(http:///1.0/config/user.service_discovery_endpoint)
 
   def start_link(args), do: GenServer.start_link(__MODULE__, args)
 
@@ -90,13 +90,19 @@ defmodule Cluster.Strategy.Uplink do
 
   defp get_nodes(%State{config: config}) do
     app_name = Keyword.fetch!(config, :app_name)
+    service_discovery_endpoint = Keyword.get(config, :service_discovery_endpoint)
 
-    %{body: instances_url} =
-        Req.get!(@service_discovery_key, unix_socket: "/dev/lxd/sock")
+    endpoint =
+      if service_discovery_endpoint do
+        service_discovery_endpoint
+      else
+        %{body: instances_url} = Req.get!(@service_discovery_key, unix_socket: "/dev/lxd/sock")
+        instances_url
+      end
 
-    Req.get!(instances_url)
+    Req.get!(endpoint)
     |> case do
-      %{status: 200, body: nodes} ->
+      %{status: 200, body: %{"attributes" => %{"instances" => nodes}}} ->
         nodes =
           nodes
           |> Enum.map(fn node_slug ->
@@ -133,7 +139,7 @@ defmodule Cluster.Strategy.Uplink do
     end
   end
 
-  def connect_nodes(topology, connect, list_nodes, to_be_connected, new_nodes) do
+  defp connect_nodes(topology, connect, list_nodes, to_be_connected, new_nodes) do
     case Cluster.Strategy.connect_nodes(
            topology,
            connect,
