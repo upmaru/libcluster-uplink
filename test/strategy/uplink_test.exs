@@ -31,7 +31,7 @@ defmodule Cluster.Strategy.UplinkTest do
         |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.resp(
           200,
-          Jason.encode!(%{attributes: %{instances: ["uplink-something-01"]}})
+          Jason.encode!(%{data: %{attributes: %{instances: ["uplink-something-01"]}}})
         )
       end)
 
@@ -51,7 +51,7 @@ defmodule Cluster.Strategy.UplinkTest do
         |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.resp(
           200,
-          Jason.encode!(%{attributes: %{instances: ["uplink-something-01"]}})
+          Jason.encode!(%{data: %{attributes: %{instances: ["uplink-something-01"]}}})
         )
       end)
 
@@ -72,7 +72,7 @@ defmodule Cluster.Strategy.UplinkTest do
         |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.resp(
           200,
-          Jason.encode!(%{attributes: %{instances: ["uplink-something-01"]}})
+          Jason.encode!(%{data: %{attributes: %{instances: ["uplink-something-01"]}}})
         )
       end)
 

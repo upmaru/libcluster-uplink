@@ -102,7 +102,7 @@ defmodule Cluster.Strategy.Uplink do
 
     Req.get!(endpoint)
     |> case do
-      %{status: 200, body: %{"attributes" => %{"instances" => nodes}}} ->
+      %{status: 200, body: %{"data" => %{"attributes" => %{"instances" => nodes}}}} ->
         nodes =
           nodes
           |> Enum.map(fn node_slug ->
