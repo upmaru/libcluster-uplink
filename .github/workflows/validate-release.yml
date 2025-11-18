@@ -1,0 +1,78 @@
+name: Validate Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to validate (e.g., 1.0.0)"
+        required: true
+        type: string
+      dry-run:
+        description: "Perform dry run only"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        elixir: ["1.18.1"]
+        otp: ["27.2"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: ./.github/actions/setup-elixir
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+          cache-key-suffix: "-validate"
+
+      - name: Test Elixir
+        uses: ./.github/actions/test-elixir
+        with:
+          check-format: "true"
+          run-tests: "true"
+
+      - name: Validate version matches tag
+        run: |
+          VERSION_IN_MIX=$(grep -oP 'version: "\K[^"]+' mix.exs)
+          if [ "$VERSION_IN_MIX" != "${{ github.event.inputs.version }}" ]; then
+            echo "Error: Version in mix.exs ($VERSION_IN_MIX) doesn't match input version (${{ github.event.inputs.version }})"
+            exit 1
+          fi
+          echo "✅ Version matches: $VERSION_IN_MIX"
+
+      - name: Setup Elixir for validation
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27.2"
+          elixir-version: "1.18.1"
+
+      - name: Validate Hex package (dry run)
+        if: github.event.inputs.dry-run == 'true'
+        run: |
+          mix deps.get
+          mix hex.publish --dry-run --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+
+      - name: Publish to Hex (if not dry run)
+        if: github.event.inputs.dry-run == 'false'
+        uses: cucumber/action-publish-hex@v1.0.0
+        with:
+          hex-api-key: ${{ secrets.HEX_API_KEY }}
+
+      - name: Check changelog
+        run: |
+          if ! grep -q "${{ github.event.inputs.version }}" CHANGELOG.md; then
+            echo "⚠️  Warning: Version ${{ github.event.inputs.version }} not found in CHANGELOG.md"
+            echo "Consider updating the changelog before release"
+          else
+            echo "✅ Version found in CHANGELOG.md"
+          fi

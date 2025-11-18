@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        elixir: ["1.18.1"]
+        otp: ["27.2"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: ./.github/actions/setup-elixir
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+
+      - name: Test Elixir
+        uses: ./.github/actions/test-elixir
+        with:
+          check-format: "true"
+          run-tests: "true"
