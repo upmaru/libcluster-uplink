@@ -1,0 +1,32 @@
+name: 'Test Elixir'
+description: 'Run Elixir tests with formatting checks'
+inputs:
+  check-format:
+    description: 'Whether to check code formatting'
+    required: false
+    default: 'true'
+  run-tests:
+    description: 'Whether to run the test suite'
+    required: false
+    default: 'true'
+  test-args:
+    description: 'Additional arguments to pass to mix test'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Compile project
+      run: mix compile --warnings-as-errors
+      shell: bash
+
+    - name: Check Formatting
+      if: inputs.check-format == 'true'
+      run: mix format --check-formatted
+      shell: bash
+
+    - name: Run tests
+      if: inputs.run-tests == 'true'
+      run: mix test ${{ inputs.test-args }}
+      shell: bash
