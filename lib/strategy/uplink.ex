@@ -3,6 +3,7 @@ defmodule Cluster.Strategy.Uplink do
   use Cluster.Strategy
 
   alias Cluster.Strategy.State
+  require Logger
 
   @default_polling_interval 5_000
   @service_discovery_key ~s(http:///1.0/config/user.service_discovery_endpoint)
@@ -92,28 +93,46 @@ defmodule Cluster.Strategy.Uplink do
     app_name = Keyword.fetch!(config, :app_name)
     service_discovery_endpoint = Keyword.get(config, :service_discovery_endpoint)
 
-    endpoint =
-      if service_discovery_endpoint do
-        service_discovery_endpoint
-      else
-        %{body: instances_url} = Req.get!(@service_discovery_key, unix_socket: "/dev/lxd/sock")
-        instances_url
+    with {:ok, endpoint} <- resolve_endpoint(service_discovery_endpoint),
+         {:ok, response} <- Req.get(endpoint) do
+      case response do
+        %{status: 200, body: %{"data" => %{"attributes" => %{"instances" => nodes}}}} ->
+          nodes =
+            nodes
+            |> Enum.map(fn node_slug ->
+              :"#{app_name}@#{node_slug}"
+            end)
+
+          {:ok, MapSet.new(nodes)}
+
+        _ ->
+          log_get_nodes_failure({:unexpected_response, response})
+          {:error, []}
       end
-
-    Req.get!(endpoint)
-    |> case do
-      %{status: 200, body: %{"data" => %{"attributes" => %{"instances" => nodes}}}} ->
-        nodes =
-          nodes
-          |> Enum.map(fn node_slug ->
-            :"#{app_name}@#{node_slug}"
-          end)
-
-        {:ok, MapSet.new(nodes)}
-
-      _ ->
+    else
+      {:error, reason} ->
+        log_get_nodes_failure(reason)
         {:error, []}
     end
+  end
+
+  defp resolve_endpoint(nil) do
+    case Req.get(@service_discovery_key, unix_socket: "/dev/lxd/sock") do
+      {:ok, %{body: instances_url}} ->
+        {:ok, instances_url}
+
+      {:ok, response} ->
+        {:error, {:unexpected_response, response}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp resolve_endpoint(endpoint), do: {:ok, endpoint}
+
+  defp log_get_nodes_failure(reason) do
+    Logger.warning("Cluster.Strategy.Uplink failed to load nodes: #{inspect(reason)}")
   end
 
   defp disconnect_nodes(
