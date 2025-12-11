@@ -6,7 +6,7 @@ defmodule ClusterUplink.MixProject do
   def project do
     [
       app: :libcluster_uplink,
-      version: "0.4.0",
+      version: "0.4.1",
       elixir: "~> 1.14",
       source_url: @url,
       build_embedded: Mix.env() == :prod,
@@ -43,7 +43,7 @@ defmodule ClusterUplink.MixProject do
   defp deps do
     [
       {:req, "~> 0.5"},
-      {:libcluster, "~> 3.3.1"},
+      {:libcluster, "~> 3.5"},
       {:bypass, "~> 2.1", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
