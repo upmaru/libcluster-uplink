@@ -6,7 +6,7 @@ defmodule Cluster.Strategy.Uplink do
   require Logger
 
   @default_polling_interval 5_000
-  @service_discovery_key ~s(http:///1.0/config/user.service_discovery_endpoint)
+  @service_discovery_key ~s(http://localhost/1.0/config/user.service_discovery_endpoint)
 
   def start_link(args), do: GenServer.start_link(__MODULE__, args)
 
@@ -93,7 +93,7 @@ defmodule Cluster.Strategy.Uplink do
     app_name = Keyword.fetch!(config, :app_name)
     service_discovery_endpoint = Keyword.get(config, :service_discovery_endpoint)
 
-    with {:ok, endpoint} <- resolve_endpoint(service_discovery_endpoint),
+    with {:ok, endpoint} <- resolve_endpoint(service_discovery_endpoint, config),
          {:ok, response} <- Req.get(endpoint) do
       case response do
         %{status: 200, body: %{"data" => %{"attributes" => %{"instances" => nodes}}}} ->
@@ -116,8 +116,10 @@ defmodule Cluster.Strategy.Uplink do
     end
   end
 
-  defp resolve_endpoint(nil) do
-    case Req.get(@service_discovery_key, unix_socket: "/dev/lxd/sock") do
+  defp resolve_endpoint(nil, config) do
+    lxd_socket = Keyword.get(config, :lxd_socket, "/dev/lxd/sock")
+
+    case Req.get(@service_discovery_key, unix_socket: lxd_socket) do
       {:ok, %{body: instances_url}} ->
         {:ok, instances_url}
 
@@ -129,7 +131,7 @@ defmodule Cluster.Strategy.Uplink do
     end
   end
 
-  defp resolve_endpoint(endpoint), do: {:ok, endpoint}
+  defp resolve_endpoint(endpoint, _config), do: {:ok, endpoint}
 
   defp log_get_nodes_failure(reason) do
     Logger.warning("Cluster.Strategy.Uplink failed to load nodes: #{inspect(reason)}")

@@ -6,8 +6,8 @@ defmodule ClusterUplink.MixProject do
   def project do
     [
       app: :libcluster_uplink,
-      version: "0.4.1",
-      elixir: "~> 1.14",
+      version: "1.0.0",
+      elixir: "~> 1.18",
       source_url: @url,
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -42,7 +42,7 @@ defmodule ClusterUplink.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:req, "~> 0.5"},
+      {:req, "~> 0.5.0"},
       {:libcluster, "~> 3.5"},
       {:bypass, "~> 2.1", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
