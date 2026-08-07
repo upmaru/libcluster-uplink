@@ -6,7 +6,7 @@ defmodule ClusterUplink.MixProject do
   def project do
     [
       app: :libcluster_uplink,
-      version: "1.0.0",
+      version: "1.0.1",
       elixir: "~> 1.18",
       source_url: @url,
       build_embedded: Mix.env() == :prod,
