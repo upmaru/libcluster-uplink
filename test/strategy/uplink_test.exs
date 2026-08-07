@@ -18,7 +18,8 @@ defmodule Cluster.Strategy.UplinkTest do
         disconnect: {__MODULE__, :disconnect, [self()]},
         config: [
           app_name: "uplink",
-          service_discovery_endpoint: "http://localhost:#{bypass.port}/installs/1/instances"
+          service_discovery_endpoint: "http://localhost:#{bypass.port}/installs/1/instances",
+          req_options: [retry: false]
         ]
       }
 
@@ -128,7 +129,7 @@ defmodule Cluster.Strategy.UplinkTest do
       state = Map.put(state, :meta, MapSet.new(nodes))
       state = Map.put(state, :list_nodes, {__MODULE__, :list_nodes, [nodes]})
 
-      Bypass.expect(bypass, "GET", "/installs/1/instances", fn conn ->
+      Bypass.expect_once(bypass, "GET", "/installs/1/instances", fn conn ->
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.resp(
