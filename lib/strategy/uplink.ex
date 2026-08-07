@@ -94,7 +94,7 @@ defmodule Cluster.Strategy.Uplink do
     service_discovery_endpoint = Keyword.get(config, :service_discovery_endpoint)
 
     with {:ok, endpoint} <- resolve_endpoint(service_discovery_endpoint, config),
-         {:ok, response} <- Req.get(endpoint) do
+         {:ok, response} <- Req.get(endpoint, req_options(config)) do
       case response do
         %{status: 200, body: %{"data" => %{"attributes" => %{"instances" => nodes}}}} ->
           nodes =
@@ -119,7 +119,9 @@ defmodule Cluster.Strategy.Uplink do
   defp resolve_endpoint(nil, config) do
     lxd_socket = Keyword.get(config, :lxd_socket, "/dev/lxd/sock")
 
-    case Req.get(@service_discovery_key, unix_socket: lxd_socket) do
+    options = Keyword.put(req_options(config), :unix_socket, lxd_socket)
+
+    case Req.get(@service_discovery_key, options) do
       {:ok, %{body: instances_url}} ->
         {:ok, instances_url}
 
@@ -132,6 +134,8 @@ defmodule Cluster.Strategy.Uplink do
   end
 
   defp resolve_endpoint(endpoint, _config), do: {:ok, endpoint}
+
+  defp req_options(config), do: Keyword.get(config, :req_options, [])
 
   defp log_get_nodes_failure(reason) do
     Logger.warning("Cluster.Strategy.Uplink failed to load nodes: #{inspect(reason)}")

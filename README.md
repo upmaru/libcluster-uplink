@@ -33,6 +33,7 @@ config :libcluster,
 | :-- | :------: | :---------- |
 | `:app_name` | ✓ | The name of your Elixir application |
 | `:lxd_socket` | | Path to the LXD Unix socket (defaults to `/dev/lxd/sock`) |
+| `:req_options` | | Options passed to `Req.get/2` (defaults to `[]`) |
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
